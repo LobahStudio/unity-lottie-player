@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -9,13 +10,13 @@ namespace Gilzoide.LottiePlayer
     public class ImageLottiePlayer : MaskableGraphic
     {
         [Header("Animation Options")]
-        [SerializeField] protected LottieAnimationAsset _animationAsset;
-        [SerializeField] protected AutoPlayEvent _autoPlay = AutoPlayEvent.OnStart;
-        [SerializeField] protected bool _loop = true;
+        [SerializeField] public LottieAnimationAsset _animationAsset;
+        [SerializeField] public AutoPlayEvent _autoPlay = AutoPlayEvent.OnStart;
+        [SerializeField] public bool _loop = true;
 
         [Header("Texture Options")]
-        [SerializeField, Min(2)] protected int _width = 128;
-        [SerializeField, Min(2)] protected int _height = 128;
+        [SerializeField, Min(2)] public int _width = 128;
+        [SerializeField, Min(2)] public int _height = 128;
         [SerializeField] protected bool _keepAspect = true;
 
         protected Texture2D _texture;
@@ -30,7 +31,7 @@ namespace Gilzoide.LottiePlayer
         public override Texture mainTexture => _texture;
 
         public bool IsPlaying => _playCoroutine != null;
-
+        public Action onFinished;
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -86,7 +87,7 @@ namespace Gilzoide.LottiePlayer
         }
 
         [ContextMenu("Play")]
-        public void Play(float startTime = 0)
+        public void Play(float startTime = 0.1f)
         {
             Pause();
             _time = startTime;
@@ -117,7 +118,7 @@ namespace Gilzoide.LottiePlayer
             // force render first frame
             _lastRenderedFrame = uint.MaxValue;
 
-            float duration = (float) _animation.GetDuration();
+            float duration = (float)_animation.GetDuration();
             while (_loop || _time < duration)
             {
                 _currentFrame = _animation.GetFrameAtTime(_time, _loop);
@@ -134,9 +135,10 @@ namespace Gilzoide.LottiePlayer
             }
             CompleteRenderJob();
             _playCoroutine = null;
+            onFinished?.Invoke();
         }
 
-        protected void RecreateAnimationIfNeeded()
+        public void RecreateAnimationIfNeeded(int renderFrame = -1)
         {
             if (!_animationAsset)
             {
@@ -162,12 +164,29 @@ namespace Gilzoide.LottiePlayer
 
             if (!Application.isPlaying)
             {
-                RenderNow();
+                RenderNow(renderFrame);
             }
         }
-
-        protected void RenderNow()
+        public void ForceStop()
         {
+            if (_playCoroutine == null)
+            {
+                return;
+            }
+            StopCoroutine(_playCoroutine);
+            CompleteRenderJob();
+            _playCoroutine = null;
+        }
+        public uint GetTotalFrame()
+        {
+            return _animation.GetTotalFrame();
+        }
+        protected void RenderNow(int renderFrame = -1)
+        {
+            if (renderFrame != -1)
+            {
+                _currentFrame = (uint)renderFrame;
+            }
             _animation.Render(_currentFrame, _texture, keepAspectRatio: false);
             _texture.Apply(true);
         }
@@ -188,11 +207,13 @@ namespace Gilzoide.LottiePlayer
         protected override void OnValidate()
         {
             base.OnValidate();
-            if (IsActive())
+            // Avoid crash
+            if (IsActive() && !_animationAsset)
             {
                 RecreateAnimationIfNeeded();
             }
         }
 #endif
+
     }
 }
