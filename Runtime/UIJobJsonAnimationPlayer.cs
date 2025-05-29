@@ -1,4 +1,4 @@
-﻿using Sirenix.OdinInspector;
+using Sirenix.OdinInspector;
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -76,7 +76,7 @@ public class UIJobJsonAnimationPlayer : MonoBehaviour
     }
     public IPoolObject Create(Transform parent)
     {
-        var newVideoPlayerGameOject = gameObject.Instantiate();
+        var newVideoPlayerGameOject = Instantiate(gameObject);
         var newVideoPlayer = newVideoPlayerGameOject.GetComponent<VideoPlayerHandler>();
         newVideoPlayer.transform.SetParent(parent);
         return newVideoPlayer;

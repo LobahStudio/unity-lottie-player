@@ -1,7 +1,6 @@
 using Gilzoide.LottiePlayer;
 using Sirenix.OdinInspector;
 using System;
-using System.Diagnostics;
 
 #if UNITY_EDITOR
 using UnityEditor;
