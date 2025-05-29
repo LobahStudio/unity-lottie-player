@@ -1,6 +1,8 @@
 using Gilzoide.LottiePlayer;
 using Sirenix.OdinInspector;
 using System;
+using System.Diagnostics;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -28,14 +30,14 @@ public class UIJsonAnimationPlayer : MonoBehaviour
         }
     }
     [Button]
-    public int AdjustSize(int frameIndex = -1) 
+    public int AdjustSize(int frameIndex = -1)
     {
         var setting = uIAnimationData.GetAnimationDataSettings(animationType);
         lottiePlayer._animationAsset = setting.videoClipsSettings[0].jsonFile;
         lottiePlayer._width = setting.videoClipsSettings[0].jsonFile.Size.x;
         lottiePlayer._height = setting.videoClipsSettings[0].jsonFile.Size.y;
         lottiePlayer.GetComponent<RectTransform>().sizeDelta = new Vector2(lottiePlayer._width, lottiePlayer._height);
-        lottiePlayer.RecreateAnimationIfNeeded(frameIndex == -1 ? Mathf.RoundToInt(lottiePlayer.GetTotalFrame()/2f) : frameIndex);
+        lottiePlayer.RecreateAnimationIfNeeded(frameIndex == -1 ? Mathf.RoundToInt(lottiePlayer.GetTotalFrame() / 2f) : frameIndex);
         lottiePlayer.gameObject.SetActive(false);
         lottiePlayer.gameObject.SetActive(true);
 #if UNITY_EDITOR
@@ -63,14 +65,14 @@ public class UIJsonAnimationPlayer : MonoBehaviour
     }
     public void StartPlayVideo(VideoClipSettings videoClipSettings)
     {
-        lottiePlayer.color = new Color(1, 1, 1,1);
+        lottiePlayer.color = new Color(1, 1, 1, 1);
         lottiePlayer.ForceStop();
         lottiePlayer._animationAsset = videoClipSettings.jsonFile;
         lottiePlayer._loop = videoClipSettings.isLooping;
         //lottiePlayer._autoPlay = AutoPlayEvent.OnEnable;
         StartPlay();
     }
-    private void StartPlay() 
+    private void StartPlay()
     {
         lottiePlayer.enabled = false;
         lottiePlayer.enabled = true;
@@ -78,7 +80,7 @@ public class UIJsonAnimationPlayer : MonoBehaviour
     }
     public IPoolObject Create(Transform parent)
     {
-        var newVideoPlayerGameOject = gameObject.Instantiate();
+        var newVideoPlayerGameOject = Instantiate(gameObject);
         var newVideoPlayer = newVideoPlayerGameOject.GetComponent<VideoPlayerHandler>();
         newVideoPlayer.transform.SetParent(parent);
         return newVideoPlayer;
