@@ -93,7 +93,35 @@ namespace Gilzoide.LottiePlayer
             _time = startTime;
             Unpause();
         }
-
+        [ContextMenu("Play In Reverse")]
+        public void PlayInReverse()
+        {
+            Pause();
+            _time = (float)_animation.GetDuration();
+            _playCoroutine = StartCoroutine(PlayReverseRoutine());
+        }
+        private IEnumerator PlayReverseRoutine()
+        {
+            _lastRenderedFrame = uint.MaxValue;
+            float duration = (float)_animation.GetDuration();
+            while (_loop || _time > 0)
+            {
+                _currentFrame = _animation.GetFrameAtTime(_time, _loop);//TODO: didnt this function with test it with _loop true values yet
+                if (_currentFrame != _lastRenderedFrame)
+                {
+                    ScheduleRenderJob(_currentFrame);
+                }
+                yield return null;
+                _time -= Time.deltaTime * 2;   ///this just to speed up the animation lma ykon in reverse otherwise hata5od L framerate L tabe3y
+                if (_currentFrame != _lastRenderedFrame)
+                {
+                    CompleteRenderJob();
+                }
+            }
+            CompleteRenderJob();
+            _playCoroutine = null;
+            onFinished?.Invoke();
+        }
         [ContextMenu("Pause")]
         public void Pause()
         {
