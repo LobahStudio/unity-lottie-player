@@ -32,6 +32,7 @@ namespace Gilzoide.LottiePlayer
 
         public bool IsPlaying => _playCoroutine != null;
         public Action onFinished;
+        bool _isAlive = true;
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -63,7 +64,32 @@ namespace Gilzoide.LottiePlayer
             _animation.Dispose();
             base.OnDestroy();
         }
+        public void Shutdown()
+        {
+            if (!_isAlive)
+                return;
 
+            _isAlive = false;
+
+            if (_playCoroutine != null)
+            {
+                StopCoroutine(_playCoroutine);
+                _playCoroutine = null;
+            }
+            try
+            {
+                if (_renderJobHandle.IsCompleted == false)
+                {
+                    _renderJobHandle.Complete();
+                }
+            }
+            catch
+            {
+            }
+            _lastRenderedFrame = _currentFrame;
+
+            onFinished = null;
+        }
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             vh.Clear();
