@@ -3,6 +3,7 @@ using System.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Gilzoide.LottiePlayer
 {
@@ -37,7 +38,7 @@ namespace Gilzoide.LottiePlayer
         {
             base.OnEnable();
             RecreateAnimationIfNeeded();
-            if (_autoPlay == AutoPlayEvent.OnEnable && Application.isPlaying)
+            if (_autoPlay == AutoPlayEvent.OnEnable && UnityEngine.Application.isPlaying)
             {
                 Play();
             }
@@ -46,7 +47,7 @@ namespace Gilzoide.LottiePlayer
         protected override void Start()
         {
             base.Start();
-            if (_autoPlay == AutoPlayEvent.OnStart && Application.isPlaying)
+            if (_autoPlay == AutoPlayEvent.OnStart && UnityEngine.Application.isPlaying)
             {
                 Play();
             }
@@ -232,6 +233,11 @@ namespace Gilzoide.LottiePlayer
                 _lastAnimationAssetCacheKey = null;
                 RecreateAnimationIfNeeded(NativeLottieAnimation.Invalid);
             }
+
+            if (!UnityEngine.Application.isPlaying)
+            {
+                RenderNow(renderFrame);
+            }
         }
 
         protected void RecreateAnimationIfNeeded(NativeLottieAnimation newAnimation)
@@ -257,10 +263,6 @@ namespace Gilzoide.LottiePlayer
                 _texture = _animation.CreateTexture(_width, _height, false);
             }
 
-            if (!Application.isPlaying)
-            {
-                RenderNow(renderFrame);
-            }
         }
         public void ForceStop()
         {
