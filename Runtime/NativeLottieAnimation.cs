@@ -11,6 +11,7 @@ namespace Gilzoide.LottiePlayer
         public IntPtr NativeHandle { get; private set; }
 
         public readonly bool IsCreated => NativeHandle != IntPtr.Zero;
+        public static NativeLottieAnimation Invalid => new();
 
         public NativeLottieAnimation(string path)
         {
@@ -25,6 +26,27 @@ namespace Gilzoide.LottiePlayer
         public NativeLottieAnimation(IntPtr nativeHandle)
         {
             NativeHandle = nativeHandle;
+        }
+
+        public override readonly bool Equals(object obj)
+        {
+            return obj is NativeLottieAnimation other
+                && other.NativeHandle == NativeHandle;
+        }
+
+        public override readonly int GetHashCode()
+        {
+            return NativeHandle.GetHashCode();
+        }
+
+        public static bool operator ==(NativeLottieAnimation a, NativeLottieAnimation b)
+        {
+            return a.NativeHandle == b.NativeHandle;
+        }
+
+        public static bool operator !=(NativeLottieAnimation a, NativeLottieAnimation b)
+        {
+            return a.NativeHandle != b.NativeHandle;
         }
 
         public void Dispose()
@@ -73,16 +95,16 @@ namespace Gilzoide.LottiePlayer
             return RLottieCApi.lottie_animation_render_tree(NativeHandle, frameNum, width, height);
         }
 
-        public unsafe readonly void Render(uint frameNum, uint width, uint height, Color32* buffer, uint bytesPerLine, bool keepAspectRatio = true)
+        public unsafe readonly void Render(uint frameNum, uint width, uint height, Color32* buffer, bool keepAspectRatio = true)
         {
             ThrowIfNotCreated();
-            RLottieCApi.lottie_animation_render_aspect(NativeHandle, frameNum, buffer, width, height, bytesPerLine, keepAspectRatio ? 1 : 0);
+            RLottieCApi.lottie_animation_render_aspect(NativeHandle, frameNum, buffer, width, height, width * (uint) UnsafeUtility.SizeOf<Color32>(), keepAspectRatio ? 1 : 0);
         }
 
-        public unsafe readonly void RenderAsync(uint frameNum, uint width, uint height, Color32* buffer, uint bytesPerLine, bool keepAspectRatio = true)
+        public unsafe readonly void RenderAsync(uint frameNum, uint width, uint height, Color32* buffer, bool keepAspectRatio = true)
         {
             ThrowIfNotCreated();
-            RLottieCApi.lottie_animation_render_async_aspect(NativeHandle, frameNum, buffer, width, height, bytesPerLine, keepAspectRatio ? 1 : 0);
+            RLottieCApi.lottie_animation_render_async_aspect(NativeHandle, frameNum, buffer, width, height, width * (uint) UnsafeUtility.SizeOf<Color32>(), keepAspectRatio ? 1 : 0);
         }
 
         public readonly void RenderAsyncFlush()

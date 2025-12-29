@@ -60,6 +60,7 @@ namespace Gilzoide.LottiePlayer
 
         protected override void OnDestroy()
         {
+            DiscardRenderJob();
             DestroyImmediate(_texture);
             _animation.Dispose();
             base.OnDestroy();
@@ -110,6 +111,28 @@ namespace Gilzoide.LottiePlayer
             vh.AddVert(new Vector3(pixelAdjustedRect.xMax, pixelAdjustedRect.yMin), color, new Vector2(1f, 1f));
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
+        }
+
+        public void SetAnimationAsset(LottieAnimationAsset animationAsset)
+        {
+            if (_animationAsset == animationAsset)
+            {
+                return;
+            }
+            Pause();
+            _animationAsset = animationAsset;
+            RecreateAnimationIfNeeded();
+        }
+
+        public void SetAnimation(NativeLottieAnimation animation)
+        {
+            if (_animation == animation)
+            {
+                return;
+            }
+            Pause();
+            _animationAsset = null;
+            RecreateAnimationIfNeeded(animation);
         }
 
         [ContextMenu("Play")]
@@ -194,26 +217,44 @@ namespace Gilzoide.LottiePlayer
 
         public void RecreateAnimationIfNeeded(int renderFrame = -1)
         {
-            if (!_animationAsset)
+            if (_animationAsset != null && _animationAsset.CacheKey == _lastAnimationAssetCacheKey)
             {
                 return;
             }
-            else if (_animationAsset.CacheKey != _lastAnimationAssetCacheKey)
+
+            if (_animationAsset != null)
             {
-                _animation.Dispose();
                 _lastAnimationAssetCacheKey = _animationAsset.CacheKey;
+                RecreateAnimationIfNeeded(_animationAsset.CreateNativeAnimation());
+            }
+            else
+            {
+                _lastAnimationAssetCacheKey = null;
+                RecreateAnimationIfNeeded(NativeLottieAnimation.Invalid);
+            }
+        }
+
+        protected void RecreateAnimationIfNeeded(NativeLottieAnimation newAnimation)
+        {
+            if (_animation.IsValid())
+            {
+                DiscardRenderJob();
+                _animation.Dispose();
+                SetVerticesDirty();
             }
 
-            if (!_animation.IsValid())
+            if (!newAnimation.IsValid())
             {
-                _animation = _animationAsset.CreateNativeAnimation();
+                return;
             }
+
+            _animation = newAnimation;
             if (_texture == null
                 || _width != _texture.width
                 || _height != _texture.height)
             {
                 DestroyImmediate(_texture);
-                _texture = _animation.CreateTexture(_width, _height, true);
+                _texture = _animation.CreateTexture(_width, _height, false);
             }
 
             if (!Application.isPlaying)
@@ -255,6 +296,11 @@ namespace Gilzoide.LottiePlayer
             _lastRenderedFrame = _currentFrame;
             _renderJobHandle.Complete();
             _texture.Apply(true);
+        }
+
+        protected void DiscardRenderJob()
+        {
+            _renderJobHandle.Complete();
         }
 
 #if UNITY_EDITOR
